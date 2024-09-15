@@ -1,14 +1,11 @@
-Splash page rules
+## Simple maintenance page
 
-2.	Task: Build Virtual Server Application 
-a.	Build and upload a maintenance webpage onto the F5.
-b.	SSH into the F5 device ssh x.x.x.x
-i.	Login with: root/default
-c.	We will build a Maintenance page in the cli.
-d.	Build this page 
-i.	vi /var/tmp/splash-page.html
-e.	using vi add the following text into the page.
-
+#### 1. Create the website page
+* SSH into the F5 device
+* Create the actual webpage file:
+  * `vi /var/tmp/splash-page.html`
+* Add the following html code into the page:
+```
 <!doctype html>
 <title>Site Maintenance</title>
 <style>
@@ -26,20 +23,20 @@ e.	using vi add the following text into the page.
         <p>&mdash; The Team</p>
     </div>
 </article>
+```
 
+#### 2. Create the system-level iFile
+`# tmsh create sys file ifile maintenance-splash-page.html source-path file:/var/tmp/splash-page.html`
 
-a.	save the file and exit vi.
-b.	In the CLI paged following config to add the maintenance page as f5 iFile objects.
-c.	tmsh create sys file ifile maintenance-splash-page.html source-path file:/var/tmp/splash-page.html
-d.	tmsh create ltm ifile maintenance-splash-page.html file-name maintenance-splash-page.html
+#### 3. Create the LTM-level iFile
+`# tmsh create ltm ifile maintenance-splash-page.html file-name maintenance-splash-page.html`
 
+#### 4. Create the irule
+* Go to "Local Traffic" --> "iRules", click on "Create"
+* Name: maint-page-irule
+* Paste the following irule into the Definition section and click "Update":
 
-3.	Task: Build the Maintenance page iRule. 
-a.	Log back into the F5 GUI.
-b.	Open Local traffic > iRules, click on Create
-c.	Name: main-irule
-d.	Paste the following irule into the Definition section.
-
+```
 when HTTP_REQUEST {
   set vsPool [LB::server pool]
   if { [active_members $vsPool] < 1 } {
@@ -47,13 +44,10 @@ when HTTP_REQUEST {
       HTTP::respond 200 content "[ifile get  maintenance-splash-page.html]" "Content-Type" "text/html" noserver "Cache-Control" "no-store, no-cache"
       }
   }
+```
 
-
-e.	Click on Finished.
-
-4.	Task: Apply the iRule to the virtual server
-a.	Open, Local traffic > Virtual Server, and select the dvwa_vs  
-b.	Click on the Resource tab
-c.	Under the iRules section, click Manage.
-d.	Select the main-iule, and click Finished.
-
+#### 5. Apply the iRule to the virtual server
+* Go to "Local Traffic" --> "Virtual Servers" and select the your virtual server
+* Click on the "Resources" tab
+* Under the "iRules" section, click "Manage"
+* Select the "maint-page-irule" and click "Finished"
